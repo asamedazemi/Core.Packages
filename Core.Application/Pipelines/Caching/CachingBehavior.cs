@@ -48,11 +48,13 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     {
         TResponse response = await next();
 
-        TimeSpan? slidingExpiration = request.SlidingExpiration?? TimeSpan.FromDays(_cacheSettings.SlidingExpiration);
-        DistributedCacheEntryOptions cacheOpstions = new() { SlidingExpiration = slidingExpiration };
+        TimeSpan? slidingExpiration = request.SlidingExpiration ?? TimeSpan.FromDays(_cacheSettings.SlidingExpiration);
+        DistributedCacheEntryOptions cacheOptions = new() { SlidingExpiration = slidingExpiration };
 
         byte[] serializeData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(response));
 
-        await _cache.SetAsync(request.CacheKey, serializeData, cancellationToken);
+        await _cache.SetAsync(request.CacheKey, serializeData, cacheOptions, cancellationToken);
+
+        return response;
     }
 }
